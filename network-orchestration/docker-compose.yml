@@ -2,6 +2,9 @@ services:
   firewall:
     image: wallarm/api-firewall
     container_name: vnf-firewall
+    environment:
+      - BACKEND_URL=http://vnf-lb:80
+      - WALLARM_API_FIREWALL_MODE=off  # Désactive le blocage strict pour forcer le maintien en vie
     ports:
       - "8080:8080"
     networks:
