@@ -1,12 +1,9 @@
 services:
-  firewall:
-    image: wallarm/api-firewall
-    container_name: vnf-firewall
-    environment:
-      - BACKEND_URL=http://vnf-lb:80
-      - WALLARM_API_FIREWALL_MODE=off  # Désactive le blocage strict pour forcer le maintien en vie
+  webserver:
+    image: nginx
+    container_name: vnf-web
     ports:
-      - "8080:8080"
+      - "8081:80"
     networks:
       - net-chain
 
@@ -16,15 +13,25 @@ services:
     ports:
       - "9090:80"
     depends_on:
-      - firewall
+      - webserver
     networks:
       - net-chain
 
-  webserver:
-    image: nginx
-    container_name: vnf-web
+  firewall:
+    image: nginx:alpine
+    container_name: vnf-firewall
+    # On utilise resolver 127.0.0.11 pour que Nginx n'échoue pas si vnf-lb met du temps à répondre
+    command: >
+      /bin/sh -c "printf 'server { 
+        listen 80; 
+        location / { 
+          resolver 127.0.0.11 valid=30s;
+          set $$upstream vnf-lb;
+          proxy_pass http://$$upstream:80; 
+        } 
+      }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
     ports:
-      - "8081:80"
+      - "8080:80"
     depends_on:
       - loadbalancer
     networks:
