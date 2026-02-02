@@ -1,0 +1,28 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+topology_template:
+  node_templates:
+    Firewall:
+      type: tosca.nodes.Root
+      interfaces:
+        Standard:
+          operations:
+            create: playbooks/deploy_firewall.yaml
+
+    LoadBalancer:
+      type: tosca.nodes.Root
+      requirements:
+        - dependency: Firewall
+      interfaces:
+        Standard:
+          operations:
+            create: playbooks/deploy_loadbalancer.yaml
+
+    WebServer:
+      type: tosca.nodes.Root
+      requirements:
+        - dependency: LoadBalancer
+      interfaces:
+        Standard:
+          operations:
+            create: playbooks/deploy_webserver.yaml
